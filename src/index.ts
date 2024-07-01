@@ -1,15 +1,12 @@
+import { config } from "dotenv";
 import { startBrowser } from "./browser.js";
-import {
-  compressDir,
-  crawlKieuVersions,
-  mkdirIfNotExists,
-} from "./controller.js";
+import { crawlKieuVersions, resetDir } from "./controller.js";
 
 (async () => {
+  config();
   const outDir = "out";
-  await mkdirIfNotExists(outDir);
+  await resetDir(outDir);
   const browser = await startBrowser();
   await crawlKieuVersions(browser, outDir);
-  await compressDir(outDir, "kieu.zip", "zip");
   await browser.close();
 })();

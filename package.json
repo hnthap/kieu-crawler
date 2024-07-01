@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "archiver": "^7.0.1",
+    "dotenv": "^16.4.5",
     "puppeteer": "^22.12.1"
   }
 }
