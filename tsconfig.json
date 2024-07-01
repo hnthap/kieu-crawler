@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "moduleResolution": "Node",
+        "target": "ESNext",
+        "module": "ES2022",
+        "lib": [
+            "ES2022",
+            "DOM"
+        ],
+        "noImplicitAny": true,
+        "removeComments": true,
+        "outDir": "dist",
+        "rootDirs": [
+            "src",
+            "tests",
+        ],
+        "esModuleInterop": true
+    }
+}
