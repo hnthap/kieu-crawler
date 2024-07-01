@@ -1,46 +1,44 @@
-import { Browser, Page } from "puppeteer";
-import { Scraper } from "./scraper.js";
-import { mkdir, writeFile } from "fs/promises";
 import archiver from "archiver";
 import { createWriteStream } from "fs";
+import { mkdir, rm, writeFile } from "fs/promises";
 import { join, resolve } from "path";
+import { Browser } from "puppeteer";
+import { scrapeKieu } from "./scraper.js";
 
 export async function crawlKieuVersions(browser: Browser, outDir: string) {
-  const versions: { name: string; url: string }[] = [
+  const metadata: { name: string; url: string }[] = [
+    {
+      name: "1871-van-duong",
+      url: "https://nomfoundation.org/nom-project/tale-of-kieu/tale-of-kieu-version-1871",
+    },
     {
       name: "1870-kinh",
       url: "https://nomfoundation.org/nom-project/tale-of-kieu/tale-of-kieu-version-1870",
     },
     {
-      name: "1906-oanh-mau",
+      name: "1902-oanh-mau",
       url: "https://nomfoundation.org/nom-project/tale-of-kieu/tale-of-kieu-version-1902",
     },
   ];
-  const page = await browser.newPage();
-  await page.setRequestInterception(true);
-  page.on("request", (request) => {
-    if (request.resourceType() === "image") {
-      request.abort();
-    } else {
-      request.continue();
-    }
-  });
-  for (const { name, url } of versions) {
-    const content = await scrapeAll(url, page);
-    const outFile = join(outDir, `kieu-${name}.txt`);
+  const kieuDir = join(outDir, "kieu");
+  await mkdirIfNotExists(kieuDir);
+  const page = await newTextPage(browser);
+  for (const { name, url } of metadata) {
+    const content = await scrapeKieu(page, url);
+    const outFile = join(kieuDir, `kieu-${name}.txt`);
     await writeFile(outFile, content);
     console.log(`📖  Saved ${name} version as ${resolve(outFile)}`);
   }
   await page.close();
+  await compressDir(kieuDir, join(outDir, "kieu.zip"), "zip");
 }
 
-async function scrapeAll(url: string, page: Page) {
-  const scraper = new Scraper(url);
-  const result = await scraper.scrape(page);
-  return result;
+export async function resetDir(dir: string) {
+  await rm(dir, { recursive: true, force: true });
+  await mkdir(dir);
 }
 
-export async function mkdirIfNotExists(dir: string) {
+async function mkdirIfNotExists(dir: string) {
   try {
     await mkdir(dir, { recursive: true });
   } catch (err) {
@@ -50,7 +48,7 @@ export async function mkdirIfNotExists(dir: string) {
   }
 }
 
-export async function compressDir(
+async function compressDir(
   dir: string,
   outFile: string,
   format: archiver.Format
@@ -66,4 +64,17 @@ export async function compressDir(
   archive.pipe(stream);
   archive.directory(dir, false);
   await archive.finalize();
+}
+
+async function newTextPage(browser: Browser) {
+  const page = await browser.newPage();
+  await page.setRequestInterception(true);
+  page.on("request", (request) => {
+    if (request.resourceType() === "image") {
+      request.abort();
+    } else {
+      request.continue();
+    }
+  });
+  return page;
 }

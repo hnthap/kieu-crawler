@@ -1,30 +1,24 @@
 import assert from "assert";
 import { Page } from "puppeteer";
 
-export class Scraper {
-  url: string;
+const DELAY_MS = parseFloat(process.env.DELAY_MS ?? "1000");
 
-  constructor(url: string) {
-    this.url = url;
-  }
+export async function scrapeKieu(page: Page, url: string) {
+  console.log(`🔨  Navigating to <${url}>...`);
+  await page.goto(url);
 
-  async scrape(page: Page) {
-    console.log(`🔨  Navigating to <${this.url}>...`);
-    await page.goto(this.url);
-
-    console.log(`🔨  Crawling Kieu...`);
-    let content = "";
-    try {
-      for (let pageId = 0; pageId < 1_000; pageId += 1) {
-        await page.evaluate(`javascript:GotoPage(${pageId});`);
-        content += "\n" + (await getKieuPage(page));
-        await sleep(500);
-      }
-    } catch (e) {
-      // Ignore
+  console.log(`🔨  Crawling Kieu...`);
+  let content = "";
+  try {
+    for (let pageId = 0; pageId < 1_000; pageId += 1) {
+      await page.evaluate(`javascript:GotoPage(${pageId});`);
+      content += "\n" + (await getKieuPage(page));
+      await sleep(DELAY_MS);
     }
-    return content;
+  } catch (e) {
+    // Ignore
   }
+  return content;
 }
 
 async function getKieuPage(page: Page) {
